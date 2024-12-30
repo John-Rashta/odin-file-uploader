@@ -4,6 +4,7 @@
   <body>
     <div class="pageContainer">
         <h1>HomePage</h1>
+        <%- include("partials/errors.ejs") %>
         <% if (locals.user) {%>
             <h1>WELCOME BACK <%= user.username %></h1>
             <a href="/logout">LOG OUT</a>

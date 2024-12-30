@@ -6,6 +6,7 @@ const passport = require("passport");
 const LocalStrategy = require('passport-local').Strategy;
 const indexRouter = require("./routes/indexRouter");
 const storageRouter = require("./routes/storageRouter");
+const folderRouter = require("./routes/folderRouter");
 require("dotenv").config();
 const { PrismaSessionStore } = require('@quixo3/prisma-session-store');
 const { PrismaClient } = require('@prisma/client');
@@ -39,6 +40,7 @@ app.use(passport.session());
 
 app.use("/", indexRouter);
 app.use("/storage", storageRouter);
+app.use("/folder", folderRouter);
 
 
 app.use((err, req, res, next) => {
