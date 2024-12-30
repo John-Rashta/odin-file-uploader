@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title></title>
+</head>
+<body>
+  <h1>Sign Up</h1>
+  <%- include("partials/errors.ejs") %>
+  <form action="/signup" method="POST">
+    <label for="username">Username</label>
+    <input id="username" name="username" type="text" required />
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" required />
+    <label for="confirm_password">Confirm Password</label>
+    <input id="confirm_password" name="confirm_password" type="password" required />
+    <button>Sign Up</button>
+  </form>
+</body>
+</html>

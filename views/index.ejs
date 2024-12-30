@@ -1,0 +1,16 @@
+<html>
+  <head>
+  </head>
+  <body>
+    <div class="pageContainer">
+        <h1>HomePage</h1>
+        <% if (locals.user) {%>
+            <h1>WELCOME BACK <%= user.username %></h1>
+            <a href="/logout">LOG OUT</a>
+        <% } else {%>
+            <a href="/login">Login</a>
+        <%  } %>
+        <a href="/signup">Signup</a>
+    </div>
+  </body>
+</html>
