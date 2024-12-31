@@ -7,6 +7,7 @@
         <h1><%= folder.name %></h1>
         <div>
             <a href=<%= `/folder/update/${folder.id}` %> >Update Folder Name</a>
+            <a href=<%= `/storage/upload/${folder.id}` %> >New File</a>
           <form action=<%= `/folder/delete/${folder.id}` %>  method="POST">
               <button type="submit">Delete Folder</button>
           </form>
@@ -18,7 +19,6 @@
               <% }) %>
           <% } %>
         </div>
-        <a href=<%= `/folder/update/${folder.id}` %> >Update Folder Name</a>
         <% } %>
     </div>
   </body>

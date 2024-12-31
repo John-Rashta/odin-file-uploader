@@ -38,7 +38,7 @@ exports.createFolder = [
         await prisma.folder.create({
             data: {
                 name: formData.name,
-                user : {
+                author : {
                     connect: {id: req.user.id}
                 }
             }
@@ -59,7 +59,7 @@ exports.showFolder = [
         };
 
         const formData = matchedData(req);
-        const folderToShow = prisma.folder.findFirst({
+        const folderToShow = await prisma.folder.findFirst({
             where: {
                 id: formData.folderid
                 },
@@ -67,7 +67,7 @@ exports.showFolder = [
                 files: true,
             }
         });
-        return res.render("folder", {folderToShow});
+        return res.render("folder", {folder: folderToShow});
     })
 ];
 

@@ -9,6 +9,17 @@
     <%- include("partials/errors.ejs") %>
     <form action="/storage/upload" method="POST" enctype="multipart/form-data">
     <input type="file"  name="uploaded_file">
+      <fieldset>
+        <legend>Choose the Folder:</legend>
+          <% if (locals.folders) { %>
+              <% locals.folders.map((folder) => { %>
+                    <div>
+                      <input type="radio" id="<%= folder.name %>" name="folders" value="<%= folder.id %>"/>
+                      <label for="<%= folder.name %>"><%= folder.name %></label>
+                  </div>
+              <% }) %>
+          <% } %>
+      </fieldset>           
       <button type="submit">Upload</button>
     </form>
   </body>
