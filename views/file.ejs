@@ -1,0 +1,26 @@
+<html>
+  <head>
+  </head>
+  <body>
+    <div class="pageContainer">
+        <% if (locals.file) { %>
+        <div>
+          <div>
+              <%= file.name %>
+          </div>
+          <div>
+              <%= file.size %> Bytes
+          </div>
+          <div>
+              Uploaded at:<%= file.upload_time %>
+          </div>
+          <div>
+            <form action=<%= `/storage/delete/${file.id}` %> method="POST">
+                <button type="submit">Delete</button>
+            </form>
+          </div>
+        </div>
+    <% } %>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,15 @@
+<html>
+  <head>
+  </head>
+  <body>
+    <div class="pageContainer">
+        <%- include("partials/errors.ejs") %>
+        <% if (locals.folder) { %>
+            <form action=<%= `/folder/update/${folder.id}` %> method="POST">
+                <input type="text" name="name" value="<%= folder.name %>" required>
+                <button type="submit">Update Folder</button>
+            </form>
+        <% } %>
+    </div>
+  </body>
+</html>

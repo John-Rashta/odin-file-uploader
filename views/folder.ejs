@@ -1,0 +1,25 @@
+<html>
+  <head>
+  </head>
+  <body>
+    <div class="pageContainer">
+        <% if (locals.folder) { %>
+        <h1><%= folder.name %></h1>
+        <div>
+            <a href=<%= `/folder/update/${folder.id}` %> >Update Folder Name</a>
+          <form action=<%= `/folder/delete/${folder.id}` %>  method="POST">
+              <button type="submit">Delete Folder</button>
+          </form>
+        </div>
+        <div>
+          <% if (locals.folder.files) { %>
+              <% folder.files.map((file) => { %>
+                  <%- include("partials/folderFile.ejs", {file}) %>
+              <% }) %>
+          <% } %>
+        </div>
+        <a href=<%= `/folder/update/${folder.id}` %> >Update Folder Name</a>
+        <% } %>
+    </div>
+  </body>
+</html>

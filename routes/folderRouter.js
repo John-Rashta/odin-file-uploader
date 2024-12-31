@@ -6,6 +6,8 @@ folderRouter.get("/create", folderController.showCreateFolder);
 folderRouter.post("/create", folderController.createFolder);
 folderRouter.get("/:folderid", folderController.showFolder);
 folderRouter.post("/delete/:folderid", folderController.deleteFolder);
+folderRouter.get("/update/:folderid", folderController.showUpdateFolder);
+folderRouter.post("/update/:folderid", folderController.updateFolder);
 
 
 module.exports = folderRouter;

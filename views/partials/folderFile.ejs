@@ -1,0 +1,10 @@
+<% if (locals.file) { %>
+    <div>
+      <div>
+          <%= file.name %>
+      </div>
+      <div>
+        <a href=<%= `/storage/file/${file.id}` %> >Details</a>
+      </div>
+    </div>
+<% } %>

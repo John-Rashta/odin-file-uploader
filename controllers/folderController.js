@@ -24,6 +24,7 @@ exports.showCreateFolder = [
 
 
 exports.createFolder = [
+    validateName,
     isAuth,
     asyncHandler(async (req, res) => {
         const errors = validationResult(req);
@@ -88,5 +89,51 @@ exports.deleteFolder = [
             }
         })
         return res.redirect("/"); ///TODO REGARDING DELETING FILES- ONLY DO IT AFTER FIGURING OUT HOW TO UPLOAD TO CLOUDI
+    })
+];
+
+exports.showUpdateFolder = [
+    validateId,
+    isAuth,
+    asyncHandler(async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).render("index", {
+                errors: errors.array(),
+              });
+        };
+
+        const formData = matchedData(req);
+
+        const folder = await prisma.folder.findFirst({
+            where: {
+                id: formData.folderid
+                }
+        });
+        return res.render("updateFolder", {folder});
+    })
+]
+
+exports.updateFolder = [
+    validateName,
+    isAuth,
+    asyncHandler(async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).render("updateFolder", {
+                errors: errors.array(),
+              });
+        };
+
+        const formData = matchedData(req);
+        await prisma.folder.update({
+            where :  {
+                id: formData.folderid,
+            },
+            data: {
+                name: formData.name
+            }
+        });
+        return res.redirect("/");
     })
 ];
