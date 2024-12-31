@@ -17,7 +17,7 @@ const validateFolderId = [
 
 const validateForm = [
     body("folders").trim()
-    .toInt().isInt(),
+        .toInt().isInt()
 ]
 
 exports.showUpload = [
@@ -38,18 +38,16 @@ exports.showUpload = [
 
 
 exports.makeUpload = [
-    validateForm,
     isAuth,
     upload.single('uploaded_file'),
+    validateForm,
     asyncHandler(async (req, res) => {
         const errors = validationResult(req);
-        /*
         if (!errors.isEmpty()) {
             return res.status(400).render("index", {
                 errors: errors.array(),
               });
         };
-        */
         
         const formData = matchedData(req);
         const newFile = await cloudinary.uploader.upload(req.file.path, {
