@@ -32,6 +32,8 @@ model Folder {
 model File {
   id Int @id @default(autoincrement())
   url String
+  public_id String
+  type String
   name String
   size Int
   upload_time DateTime

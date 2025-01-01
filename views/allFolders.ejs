@@ -1,0 +1,21 @@
+<html>
+  <head>
+  </head>
+  <body>
+    <div class="pageContainer">
+        <div>
+          <h1>Folders</h1>
+          <a href="/folder/create"><button >New Folder</button></a>
+        </div>
+        <div>
+          <ul>
+          <% if (locals.folders) { %>
+            <% folders.map((folder) => { %>
+                <li><a href=<%= `/folder/${folder.id}` %> ><%= folder.name %> </a> </li>
+            <% }) %>
+          <% } %>
+          </ul>
+        </div>
+    </div>
+  </body>
+</html>

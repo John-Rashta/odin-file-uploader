@@ -7,6 +7,9 @@
         <%- include("partials/errors.ejs") %>
         <% if (locals.user) {%>
             <h1>WELCOME BACK <%= user.username %></h1>
+            <a href="/folder/index">Folders</a>
+            <a href="/folder/create">Create Folder</a>
+            <a href="/storage/upload">Upload File</a>
             <a href="/logout">LOG OUT</a>
         <% } else {%>
             <a href="/login">Login</a>

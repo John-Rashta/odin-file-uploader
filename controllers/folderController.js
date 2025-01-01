@@ -3,6 +3,7 @@ const { body, validationResult, param, matchedData } = require("express-validato
 const { isAuth } = require("../middleware/authMiddleware");
 const {prisma} = require("../config/client");
 const passport = require("passport");
+const cloudinary = require("../config/cloudinary");
 
 const validateName = [
     body("name").trim()
@@ -83,11 +84,39 @@ exports.deleteFolder = [
         };
 
         const formData = matchedData(req);
+        const fileStash = await prisma.file.findMany({
+            select: {
+                public_id: true,
+                type: true,
+            },
+            where: {
+                folderid: formData.folderid
+            }
+        });
+
+        const allIds =  {raw: [[]], image: [[]], video: [[]]};
+        fileStash.forEach((file) => {
+            if (allIds[file.type].at(-1).length === 100) {
+                allIds[file.type].push([]);
+            }
+            allIds[file.type].at(-1).push(file.public_id);
+
+        });
+        
+        Object.keys(allIds).forEach(async (key) => {
+            if (allIds[key][0].length < 1) {
+                return;
+            }
+            await allIds[key].forEach(async (idCollection) => {
+                await cloudinary.api.delete_resources(idCollection, {resource_type: key});
+            });
+        }); 
+
         await prisma.folder.delete({
             where: {
                 id: formData.folderid
             }
-        })
+        }) 
         return res.redirect("/"); ///TODO REGARDING DELETING FILES- ONLY DO IT AFTER FIGURING OUT HOW TO UPLOAD TO CLOUDI
     })
 ];
@@ -115,7 +144,7 @@ exports.showUpdateFolder = [
 ]
 
 exports.updateFolder = [
-    validateName,
+    validateName.concat(validateId),
     isAuth,
     asyncHandler(async (req, res) => {
         const errors = validationResult(req);
@@ -135,5 +164,17 @@ exports.updateFolder = [
             }
         });
         return res.redirect("/");
+    })
+];
+
+exports.showAllFolders = [
+    isAuth,
+    asyncHandler(async (req, res) => {
+        const folders = await prisma.folder.findMany({
+            where: {
+                authorid: req.user.id
+                }
+        });
+        return res.render("allFolders", {folders});
     })
 ];

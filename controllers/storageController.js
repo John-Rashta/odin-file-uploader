@@ -5,6 +5,9 @@ const {prisma} = require("../config/client");
 const passport = require("passport");
 const upload = require("../middleware/uploadMulter");
 const cloudinary = require("../config/cloudinary");
+const fs = require('fs');
+const { promisify } = require('util');
+const unlinkWithAsync = promisify(fs.unlink);
 
 const validateId = [
     param("fileid").trim()
@@ -23,16 +26,12 @@ const validateForm = [
 exports.showUpload = [
     isAuth,
     asyncHandler(async (req, res) => {
-        const userFolders = await prisma.user.findFirst({
+        const userFolders = await prisma.folder.findMany({
             where: {
-                id: req.user.id,
-            },
-            include: {
-                folders: true
-
+                authorid: req.user.id,
             }
         });
-        return res.render("upload", {folders: userFolders.folders});
+        return res.render("upload", {folders: userFolders});
     })
 ];
 
@@ -55,17 +54,21 @@ exports.makeUpload = [
         });
         await prisma.file.create({
             data: {
-                url: newFile.public_id,
+                url: newFile.secure_url,
+                public_id: newFile.public_id,
                 name: req.file.filename,
                 size: req.file.size,
                 upload_time: new Date(),
+                type:newFile.resource_type,
                 folder: {
                     connect: {
-                        id: Number(req.body.folders)
+                        id: formData.folders
                     }
                 }
             }
         })
+
+        await unlinkWithAsync(req.file.path);
 
         return res.redirect("/");
     })
@@ -83,7 +86,13 @@ exports.deleteFile = [
         };
 
         const formData = matchedData(req);
-
+        const fileInfo = await prisma.file.findFirst({
+            where: {
+                id: formData.fileid
+            }
+        });
+        
+        await cloudinary.uploader.destroy(fileInfo.public_id, {resource_type: fileInfo.type});
         await prisma.file.delete({
             where: {
                 id: formData.fileid
@@ -113,7 +122,7 @@ exports.showFileDetails = [
             }
         });
 
-        return res.render("file", {fileData});
+        return res.render("file", {file:fileData});
     })
 ];
 
@@ -129,7 +138,7 @@ exports.showUploadToFolder = [
         };
 
         const formData = matchedData(req);
-        return res.render("upload", {folderid: formData.folderid});
+        return res.render("uploadToFolder", {folderid: formData.folderid});
     })
 ];
 
@@ -146,29 +155,27 @@ exports.makeUploadToFolder = [
         };
 
         const formData = matchedData(req);
-        const newFile = cloudinary.uploader.upload(req.file.path, function (err, result) {
-            if (err) {
-                console.log(err);
-                return res.status(500).json({
-                    success: false,
-                    message: "Error uploading"
-                });
-            }
-
-            return result;
+        const newFile = await cloudinary.uploader.upload(req.file.path, {
+            resource_type: "auto"
         });
 
         await prisma.file.create({
             data: {
-                URL: newFile.public_id,
+                url: newFile.secure_url,
+                public_id: newFile.public_id,
                 name: req.file.filename,
                 size: req.file.size,
                 upload_time: new Date(),
+                type:newFile.resource_type,
                 folder: {
-                    connect: formData.folderid
+                    connect: {
+                        id: formData.folderid
+                    } 
                 }
             }
         })
+
+        await unlinkWithAsync(req.file.path);
 
         return res.redirect("/");
     })
