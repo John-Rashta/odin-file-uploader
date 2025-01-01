@@ -1,11 +1,5 @@
 const {prisma} = require("../config/client");
 
-module.exports.removeFolder = function(folderid, storage) {
-    const newArr = storage.filter((id) => id !== folderid);
-    storage = newArr;
-    return;
-};
-
 module.exports.checkIfFolderOwner = function(folderid, storage) {
     const isOwner = storage.includes(folderid);
     return isOwner;
@@ -20,6 +14,10 @@ module.exports.checkIfFileOwner = async function(fileid, storage) {
             id: fileid
         }
     });
+
+    if (!fileInQuestion) {
+        return false;
+    }
 
     const isOwner = this.checkIfFolderOwner(fileInQuestion.folderid, storage);
     return isOwner;

@@ -6,7 +6,8 @@ const passport = require("passport");
 const {basicErrorMiddleware} = require("../middleware/errorMiddleware");
 const cloudinary = require("../config/cloudinary");
 const {foldersGetWare} = require("../middleware/folderMiddleware");
-const folderHelpers = require("../util/folderMiddlewareHelpers");
+const {removeFolder} = require("../util/folderDeleteHelper");
+const {checkOwner} = require("../util/checkHelper");
 
 const validateName = [
     body("name").trim()
@@ -57,8 +58,7 @@ exports.showFolder = [
     basicErrorMiddleware("index", true),
     asyncHandler(async (req, res) => {
         const formData = matchedData(req);
-        const check = folderHelpers.checkIfFolderOwner(formData.folderid, req.user.folders);
-        if (!check) {
+        if (!checkOwner("folder", formData.folderid, req.user.folders)) {
             return res.redirect("/");
         };
         const folderToShow = await prisma.folder.findFirst({
@@ -86,6 +86,9 @@ exports.deleteFolder = [
         };
 
         const formData = matchedData(req);
+        if (!checkOwner("folder", formData.folderid, req.user.folders)) {
+            return res.redirect("/");
+        };
         const fileStash = await prisma.file.findMany({
             select: {
                 public_id: true,
@@ -120,7 +123,7 @@ exports.deleteFolder = [
             }
         });
 
-        folderHelpers.removeFolder(formData.folderid, req.user.folders);
+        removeFolder(formData.folderid, req.user.folders);
 
         return res.redirect("/"); ///TODO REGARDING DELETING FILES- ONLY DO IT AFTER FIGURING OUT HOW TO UPLOAD TO CLOUDI
     })
@@ -140,6 +143,9 @@ exports.showUpdateFolder = [
         };
 
         const formData = matchedData(req);
+        if (!checkOwner("folder", formData.folderid, req.user.folders)) {
+            return res.redirect("/");
+        };
 
         const folder = await prisma.folder.findFirst({
             where: {
@@ -163,6 +169,9 @@ exports.updateFolder = [
         };
 
         const formData = matchedData(req);
+        if (!checkOwner("folder", formData.folderid, req.user.folders)) {
+            return res.redirect("/");
+        };
         await prisma.folder.update({
             where :  {
                 id: formData.folderid,

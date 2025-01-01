@@ -10,6 +10,7 @@ const fs = require('fs');
 const { promisify } = require('util');
 const unlinkWithAsync = promisify(fs.unlink);
 const {foldersGetWare} = require("../middleware/folderMiddleware");
+const {checkOwner} = require("../util/checkHelper");
 
 const validateId = [
     param("fileid").trim()
@@ -85,6 +86,11 @@ exports.deleteFile = [
     basicErrorMiddleware("index", true),
     asyncHandler(async (req, res) => {
         const formData = matchedData(req);
+        const fileCheck = await checkOwner("file", formData.fileid, req.user.folders);
+        if (!fileCheck) {
+            return res.redirect("/");
+        };
+
         const fileInfo = await prisma.file.findFirst({
             where: {
                 id: formData.fileid
@@ -110,6 +116,11 @@ exports.showFileDetails = [
     asyncHandler(async (req, res) => {
         const formData = matchedData(req);
 
+        const fileCheck = await checkOwner("file", formData.fileid, req.user.folders);
+        if (!fileCheck) {
+            return res.redirect("/");
+        };
+
         const fileData = await prisma.file.findFirst({
             where: {
                 id: formData.fileid
@@ -127,6 +138,9 @@ exports.showUploadToFolder = [
     basicErrorMiddleware("index", true),
     asyncHandler(async (req, res) => {
         const formData = matchedData(req);
+        if (!checkOwner("folder", formData.folderid, req.user.folders)) {
+            return res.redirect("/");
+        };
         return res.render("uploadToFolder", {folderid: formData.folderid});
     })
 ];
@@ -145,6 +159,9 @@ exports.makeUploadToFolder = [
         };
 
         const formData = matchedData(req);
+        if (!checkOwner("folder", formData.folderid, req.user.folders)) {
+            return res.redirect("/");
+        };
         const newFile = await cloudinary.uploader.upload(req.file.path, {
             resource_type: "auto"
         });
