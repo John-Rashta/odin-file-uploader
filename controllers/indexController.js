@@ -4,6 +4,7 @@ const { isAuth } = require("../middleware/authMiddleware");
 const {prisma} = require("../config/client");
 const passport = require("passport");
 const bcrypt = require('bcryptjs');
+const {basicErrorMiddleware} = require("../middleware/errorMiddleware");
 
 const validateSignUp = [
     body("username").trim()
@@ -38,13 +39,8 @@ exports.showSignupUser = asyncHandler(async (req, res) => {
 
 exports.makeSignupUser = [
     validateSignUp,
+    basicErrorMiddleware("signup"),
     asyncHandler(async (req, res) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).render("signup", {
-                errors: errors.array(),
-              });
-        };
         const formData = matchedData(req);
         const invalidUser = await prisma.user.findFirst({where: {username: formData.username}});
         if (invalidUser) {
@@ -81,15 +77,7 @@ exports.showLoginUser = asyncHandler(async (req, res) => {
 
 exports.makeLoginUser = [
     validateLogin,
-    asyncHandler(async (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).render("login", {
-                errors: errors.array(),
-            });
-        };
-        next();
-    }),
+    basicErrorMiddleware("login"),
     passport.authenticate("local", {
         successRedirect: "/",
         failureRedirect: "/"

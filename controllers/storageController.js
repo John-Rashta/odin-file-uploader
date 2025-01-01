@@ -2,12 +2,14 @@ const asyncHandler = require('express-async-handler');
 const { body, validationResult, param, matchedData } = require("express-validator");
 const { isAuth } = require("../middleware/authMiddleware");
 const {prisma} = require("../config/client");
+const {basicErrorMiddleware} = require("../middleware/errorMiddleware");
 const passport = require("passport");
 const upload = require("../middleware/uploadMulter");
 const cloudinary = require("../config/cloudinary");
 const fs = require('fs');
 const { promisify } = require('util');
 const unlinkWithAsync = promisify(fs.unlink);
+const {foldersGetWare} = require("../middleware/folderMiddleware");
 
 const validateId = [
     param("fileid").trim()
@@ -25,6 +27,7 @@ const validateForm = [
 
 exports.showUpload = [
     isAuth,
+    foldersGetWare,
     asyncHandler(async (req, res) => {
         const userFolders = await prisma.folder.findMany({
             where: {
@@ -38,6 +41,7 @@ exports.showUpload = [
 
 exports.makeUpload = [
     isAuth,
+    foldersGetWare,
     upload.single('uploaded_file'),
     validateForm,
     asyncHandler(async (req, res) => {
@@ -45,7 +49,7 @@ exports.makeUpload = [
         if (!errors.isEmpty()) {
             return res.status(400).render("index", {
                 errors: errors.array(),
-              });
+              }); //TODO ERROR HANDLING
         };
         
         const formData = matchedData(req);
@@ -75,16 +79,11 @@ exports.makeUpload = [
 ];
 
 exports.deleteFile = [
-    validateId,
     isAuth,
+    foldersGetWare,
+    validateId,
+    basicErrorMiddleware("index", true),
     asyncHandler(async (req, res) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).render("index", {
-                errors: errors.array(),
-              });
-        };
-
         const formData = matchedData(req);
         const fileInfo = await prisma.file.findFirst({
             where: {
@@ -104,16 +103,11 @@ exports.deleteFile = [
 ];
 
 exports.showFileDetails = [
-    validateId,
     isAuth,
+    foldersGetWare,
+    validateId,
+    basicErrorMiddleware("index", true),
     asyncHandler(async (req, res) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).render("index", {
-                errors: errors.array(),
-              });
-        };
-
         const formData = matchedData(req);
 
         const fileData = await prisma.file.findFirst({
@@ -127,31 +121,27 @@ exports.showFileDetails = [
 ];
 
 exports.showUploadToFolder = [
-    validateFolderId,
     isAuth,
+    foldersGetWare,
+    validateFolderId,
+    basicErrorMiddleware("index", true),
     asyncHandler(async (req, res) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).render("index", {
-                errors: errors.array(),
-              });
-        };
-
         const formData = matchedData(req);
         return res.render("uploadToFolder", {folderid: formData.folderid});
     })
 ];
 
 exports.makeUploadToFolder = [
-    validateFolderId,
     isAuth,
+    foldersGetWare,
+    validateFolderId,
     upload.single('uploaded_file'),
     asyncHandler(async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).render("index", {
                 errors: errors.array(),
-              });
+              }); //TODO ERROR HANDLING
         };
 
         const formData = matchedData(req);

@@ -3,7 +3,10 @@ const { body, validationResult, param, matchedData } = require("express-validato
 const { isAuth } = require("../middleware/authMiddleware");
 const {prisma} = require("../config/client");
 const passport = require("passport");
+const {basicErrorMiddleware} = require("../middleware/errorMiddleware");
 const cloudinary = require("../config/cloudinary");
+const {foldersGetWare} = require("../middleware/folderMiddleware");
+const folderHelpers = require("../util/folderMiddlewareHelpers");
 
 const validateName = [
     body("name").trim()
@@ -18,25 +21,22 @@ const validateId = [
 
 exports.showCreateFolder = [
     isAuth,
+    foldersGetWare,
     asyncHandler(async (req, res) => {
+        console.log(req.user.folders)
         return res.render("create");
     })
 ];
 
 
 exports.createFolder = [
-    validateName,
     isAuth,
+    foldersGetWare,
+    validateName,
+    basicErrorMiddleware("create"),
     asyncHandler(async (req, res) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).render("create", {
-                errors: errors.array(),
-              });
-        };
-
         const formData = matchedData(req);
-        await prisma.folder.create({
+        const newFolder = await prisma.folder.create({
             data: {
                 name: formData.name,
                 author : {
@@ -44,22 +44,23 @@ exports.createFolder = [
                 }
             }
         });
+        req.user.folders.push(newFolder.id);
+        console.log(req.user.folders)
         return res.redirect("/");
     })
 ];
 
 exports.showFolder = [
-    validateId,
     isAuth,
+    foldersGetWare,
+    validateId,
+    basicErrorMiddleware("index", true),
     asyncHandler(async (req, res) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).render("index", {
-                errors: errors.array(),
-              });
-        };
-
         const formData = matchedData(req);
+        const check = folderHelpers.checkIfFolderOwner(formData.folderid, req.user.folders);
+        if (!check) {
+            return res.redirect("/");
+        };
         const folderToShow = await prisma.folder.findFirst({
             where: {
                 id: formData.folderid
@@ -73,14 +74,15 @@ exports.showFolder = [
 ];
 
 exports.deleteFolder = [
-    validateId,
     isAuth,
+    foldersGetWare,
+    validateId,
     asyncHandler(async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).render("index", {
                 errors: errors.array(),
-              });
+              }); //TODO ERROR HANDLING
         };
 
         const formData = matchedData(req);
@@ -116,14 +118,19 @@ exports.deleteFolder = [
             where: {
                 id: formData.folderid
             }
-        }) 
+        });
+
+        folderHelpers.removeFolder(formData.folderid, req.user.folders);
+
         return res.redirect("/"); ///TODO REGARDING DELETING FILES- ONLY DO IT AFTER FIGURING OUT HOW TO UPLOAD TO CLOUDI
     })
 ];
 
 exports.showUpdateFolder = [
-    validateId,
     isAuth,
+    foldersGetWare,
+    validateId,
+    basicErrorMiddleware("index", true),
     asyncHandler(async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -144,14 +151,15 @@ exports.showUpdateFolder = [
 ]
 
 exports.updateFolder = [
-    validateName.concat(validateId),
     isAuth,
+    foldersGetWare,
+    validateName.concat(validateId),
     asyncHandler(async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).render("updateFolder", {
                 errors: errors.array(),
-              });
+              }); //TODO FIX ERROR HANDLING
         };
 
         const formData = matchedData(req);
@@ -169,6 +177,7 @@ exports.updateFolder = [
 
 exports.showAllFolders = [
     isAuth,
+    foldersGetWare,
     asyncHandler(async (req, res) => {
         const folders = await prisma.folder.findMany({
             where: {
