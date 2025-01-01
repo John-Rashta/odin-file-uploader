@@ -48,9 +48,15 @@ exports.makeUpload = [
     asyncHandler(async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).render("index", {
+            const userFolders = await prisma.folder.findMany({
+                where: {
+                    authorid: req.user.id,
+                }
+            });
+            return res.status(400).render("upload", {
                 errors: errors.array(),
-              }); //TODO ERROR HANDLING
+                folders: userFolders,
+              });
         };
         
         const formData = matchedData(req);
@@ -150,14 +156,8 @@ exports.makeUploadToFolder = [
     foldersGetWare,
     validateFolderId,
     upload.single('uploaded_file'),
+    basicErrorMiddleware("index", true),
     asyncHandler(async (req, res) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).render("index", {
-                errors: errors.array(),
-              }); //TODO ERROR HANDLING
-        };
-
         const formData = matchedData(req);
         if (!checkOwner("folder", formData.folderid, req.user.folders)) {
             return res.redirect("/");

@@ -80,9 +80,7 @@ exports.deleteFolder = [
     asyncHandler(async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).render("index", {
-                errors: errors.array(),
-              }); //TODO ERROR HANDLING
+            return res.redirect("/folder/index");
         };
 
         const formData = matchedData(req);
@@ -125,7 +123,7 @@ exports.deleteFolder = [
 
         removeFolder(formData.folderid, req.user.folders);
 
-        return res.redirect("/"); ///TODO REGARDING DELETING FILES- ONLY DO IT AFTER FIGURING OUT HOW TO UPLOAD TO CLOUDI
+        return res.redirect("/");
     })
 ];
 
@@ -162,13 +160,28 @@ exports.updateFolder = [
     validateName.concat(validateId),
     asyncHandler(async (req, res) => {
         const errors = validationResult(req);
+        const formData = matchedData(req);
         if (!errors.isEmpty()) {
-            return res.status(400).render("updateFolder", {
+            if (Object.hasOwn(formData, "folderid") && Number.isInteger(formData.folderid)) {
+                if (!checkOwner("folder", formData.folderid, req.user.folders)) {
+                    return res.redirect("/");
+                };
+                const folder = await prisma.folder.findFirst({
+                    where: {
+                        id: formData.folderid
+                        }
+                });
+                return res.render("updateFolder", {
+                    errors: errors.array(),
+                    folder});
+            }
+            return res.status(400).render("index", {
                 errors: errors.array(),
-              }); //TODO FIX ERROR HANDLING
+                user: req.user
+              });
         };
 
-        const formData = matchedData(req);
+        
         if (!checkOwner("folder", formData.folderid, req.user.folders)) {
             return res.redirect("/");
         };
