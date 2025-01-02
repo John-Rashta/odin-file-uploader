@@ -23,7 +23,7 @@ const validateId = [
 ];
 
 const validateShare = [
-    body("folderid").trim()
+    body("folder").trim()
         .toInt().isInt().withMessage("Folder Does Not Exist."),
     body("days").trim()
         .toInt().isInt().withMessage("Must be a number of days."),
@@ -33,7 +33,6 @@ exports.showCreateFolder = [
     isAuth,
     foldersGetWare,
     asyncHandler(async (req, res) => {
-        console.log(req.user.folders)
         return res.render("create");
     })
 ];
@@ -67,7 +66,8 @@ exports.showFolder = [
     basicErrorMiddleware("index", true),
     asyncHandler(async (req, res) => {
         const formData = matchedData(req);
-        if (!checkOwner("folder", formData.folderid, req.user.folders)) {
+        check = checkOwner("folder", formData.folderid, req.user.folders);
+        if (!check) {
             return res.redirect("/");
         };
         const folderToShow = await prisma.folder.findFirst({
@@ -93,7 +93,8 @@ exports.deleteFolder = [
         };
 
         const formData = matchedData(req);
-        if (!checkOwner("folder", formData.folderid, req.user.folders)) {
+        check = checkOwner("folder", formData.folderid, req.user.folders);
+        if (!check) {
             return res.redirect("/");
         };
         const fileStash = await prisma.file.findMany({
@@ -143,7 +144,8 @@ exports.showUpdateFolder = [
     basicErrorMiddleware("index", true),
     asyncHandler(async (req, res) => {
         const formData = matchedData(req);
-        if (!checkOwner("folder", formData.folderid, req.user.folders)) {
+        check = checkOwner("folder", formData.folderid, req.user.folders);
+        if (!check) {
             return res.redirect("/");
         };
 
@@ -165,7 +167,8 @@ exports.updateFolder = [
         const formData = matchedData(req);
         if (!errors.isEmpty()) {
             if (Object.hasOwn(formData, "folderid") && Number.isInteger(formData.folderid)) {
-                if (!checkOwner("folder", formData.folderid, req.user.folders)) {
+                check = checkOwner("folder", formData.folderid, req.user.folders);
+                if (!check) {
                     return res.redirect("/");
                 };
                 const folder = await prisma.folder.findFirst({
@@ -184,7 +187,8 @@ exports.updateFolder = [
         };
 
         
-        if (!checkOwner("folder", formData.folderid, req.user.folders)) {
+        check = checkOwner("folder", formData.folderid, req.user.folders);
+        if (!check) {
             return res.redirect("/");
         };
         await prisma.folder.update({
@@ -216,7 +220,16 @@ exports.showShareForm = [
     isAuth,
     foldersGetWare,
     asyncHandler(async (req, res) => {
-        return res.render("shareForm", {folders: req.user.folders});
+        if (req.user.folders.length < 1) {
+            return res.redirect("/");
+        }
+        
+        const folders = await prisma.folder.findMany({
+            where: {
+                authorid: req.user.id
+                }
+        });
+        return res.render("shareForm", {folders});
     })
 ];
 
@@ -224,12 +237,16 @@ exports.showAllCodes = [
     isAuth,
     foldersGetWare,
     asyncHandler(async (req, res) => {
-        const allCodes = prisma.sharecode.findMany({
+        const allCodes = await prisma.shareCode.findMany({
             where: {
                 userid: req.user.id
+            },
+            include : {
+                folder: true
             }
         })
-        return res.render("sharedFolders", {allCodes, linkStart: `${req.protocol}://${req.host}/share/` });
+       
+        return res.render("sharedFolders", {allCodes, linkStart: `${req.protocol}://${req.get("host")}/share/` });
     })
 ]
 
@@ -246,13 +263,14 @@ exports.makeShareCode = [
             });
         };
         const formData = matchedData(req);
-        if (!checkOwner("folder", formData.folderid, req.user.folders)) {
+        const check = await checkOwner("folder", formData.folder, req.user.folders);
+        if (!check) {
             return res.redirect("/");
         };
-
+        
         const newCode = crypto.randomUUID();
 
-        await prisma.sharecode.create({
+        await prisma.shareCode.create({
             data: {
                 code: newCode,
                 expiry_date: add(new Date(), {days: formData.days}),
@@ -263,13 +281,13 @@ exports.makeShareCode = [
                 },
                 folder: {
                     connect: {
-                        id: formData.folderid
+                        id: formData.folder
                     }
                 }
 
             }
         });
 
-        return res.render("sharedCode", {link: `${req.protocol}://${req.host}/share/${newCode}`});
+        return res.render("sharedCode", {link: `${req.protocol}://${req.get("host")}/share/${newCode}`});
     })
 ]

@@ -18,6 +18,6 @@ module.exports.checkOwner = async (type, id, storage) => {
             break;
         }
     }
-
+    
     return true;
 }

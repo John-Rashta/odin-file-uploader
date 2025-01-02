@@ -3,7 +3,7 @@ const { body, validationResult, param, matchedData } = require("express-validato
 const {prisma} = require("../config/client");
 const passport = require("passport");
 const {basicErrorMiddleware} = require("../middleware/errorMiddleware");
-const { compareAsc} = require("date-fns");
+const { isAfter} = require("date-fns");
 
 const validateCode = [
     param("code").trim()
@@ -21,37 +21,38 @@ exports.showSharedFolder = [
     basicErrorMiddleware("index"),
     asyncHandler(async (req, res) => {
         const formData = matchedData(req);
-        const sharedFolder = await prisma.sharecode.findFirst({
+        const sharedFolder = await prisma.shareCode.findFirst({
             where: {
                 code: formData.code
             },
+            include: {
+                folder: {
+                    include: {
+                        files: true
+                    }
+                }
+            }
         });
 
         if (isAfter(new Date(), sharedFolder.expiry_date)) {
-            await prisma.sharecode.delete({
+            await prisma.shareCode.delete({
                 where: {
-                    code: formData.code,
-                    expiry_date: formData.expiry_date
-                },
-                include: {
-                    folder: true
-
+                    code: sharedFolder.code,
                 }
             });
 
             return res.redirect("/");
         };
-
         return res.render("folder", {sharedCode: sharedFolder.code, folder: sharedFolder.folder } )
     })
-]
+];
 
 exports.showSharedFile = [
     validateCode.concat(validateId),
     basicErrorMiddleware("index"),
     asyncHandler(async (req, res) => {
         const formData = matchedData(req);
-        const sharedData = await prisma.sharecode.findFirst({
+        const sharedData = await prisma.shareCode.findFirst({
             where: {
                 code: formData.code
             }
@@ -65,11 +66,13 @@ exports.showSharedFile = [
                 id: formData.fileid
             }
         });
-
-        if (!sharedData.folderid !== fileData.folderid) {
+        if (!fileData) {
+            return res.status(400).render("index");
+        }
+        if (sharedData.folderid !== fileData.folderid) {
             return res.status(401).render("index");
         }
-
+        
         return res.render("file", {file: fileData});
     })
-]
+];

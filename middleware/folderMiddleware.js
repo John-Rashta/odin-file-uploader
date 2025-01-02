@@ -16,10 +16,11 @@ module.exports.foldersGetWare = asyncHandler(async (req, res, next) => {
     });
 
     const folderArr = [];
-    folderIds.forEach((folder) => {
-        folderArr.push(folder.id);
-    });
-
+    if (folderIds) {
+        folderIds.forEach((folder) => {
+            folderArr.push(folder.id);
+        });
+    }
     req.user.folders = folderArr;
     next();
 })

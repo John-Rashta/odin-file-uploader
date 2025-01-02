@@ -60,6 +60,10 @@ exports.makeUpload = [
         };
         
         const formData = matchedData(req);
+        check = checkOwner("folder", formData.folders, req.user.folders);
+        if (!check) {
+            return res.redirect("/");
+        };
         const newFile = await cloudinary.uploader.upload(req.file.path, {
             resource_type: "auto"
         });
@@ -132,7 +136,7 @@ exports.showFileDetails = [
                 id: formData.fileid
             }
         });
-
+        console.log(fileData)
         return res.render("file", {file:fileData, owner: true});
     })
 ];
@@ -144,7 +148,8 @@ exports.showUploadToFolder = [
     basicErrorMiddleware("index", true),
     asyncHandler(async (req, res) => {
         const formData = matchedData(req);
-        if (!checkOwner("folder", formData.folderid, req.user.folders)) {
+        check = checkOwner("folder", formData.folderid, req.user.folders);
+        if (!check) {
             return res.redirect("/");
         };
         return res.render("uploadToFolder", {folderid: formData.folderid});
@@ -159,7 +164,8 @@ exports.makeUploadToFolder = [
     basicErrorMiddleware("index", true),
     asyncHandler(async (req, res) => {
         const formData = matchedData(req);
-        if (!checkOwner("folder", formData.folderid, req.user.folders)) {
+        check = checkOwner("folder", formData.folderid, req.user.folders);
+        if (!check) {
             return res.redirect("/");
         };
         const newFile = await cloudinary.uploader.upload(req.file.path, {
@@ -181,6 +187,8 @@ exports.makeUploadToFolder = [
                 }
             }
         })
+
+        console.log(newFile)
 
         await unlinkWithAsync(req.file.path);
 

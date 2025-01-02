@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  </head>
+<body>
+  <div class="pageContainer">
+    <main>
+      <div>
+        <%- include("partials/errors.ejs") %>
+        <form action="/folder/share" method="POST">
+          <input type="number" name="days" required>
+          <fieldset>
+            <legend>Choose the Folder:</legend>
+              <% if (locals.folders) { %>
+                  <% locals.folders.map((folder) => { %>
+                        <div>
+                          <input type="radio" id="<%= folder.name %>" name="folder" value="<%= folder.id %>"/>
+                          <label for="<%= folder.name %>"><%= folder.name %></label>
+                      </div>
+                  <% }) %>
+              <% } %>
+          </fieldset>    
+          <button type="submit">Share Folder</button>
+        </form>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
