@@ -3,8 +3,15 @@
       <div>
           <%= file.name %>
       </div>
-      <div>
-        <a href=<%= `/storage/file/${file.id}` %> >Details</a>
-      </div>
+      <% if (locals.owner) { %>
+        <div>
+          <a href=<%= `/storage/file/${file.id}` %> >Details</a>
+        </div>
+      <% } 
+      <% if (locals.sharedCode) { %>
+        <div>
+          <a href=<%= `/share/${sharedCode}/${file.id}` %> >Details</a>
+        </div>
+      <% } %>
     </div>
 <% } %>

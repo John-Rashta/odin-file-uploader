@@ -8,6 +8,8 @@ const cloudinary = require("../config/cloudinary");
 const {foldersGetWare} = require("../middleware/folderMiddleware");
 const {removeFolder} = require("../util/folderDeleteHelper");
 const {checkOwner} = require("../util/checkHelper");
+const crypto = require("node:crypto");
+const { add } = require("date-fns");
 
 const validateName = [
     body("name").trim()
@@ -18,6 +20,13 @@ const validateName = [
 const validateId = [
     param("folderid").trim()
         .toInt().isInt().withMessage("Folder Does Not Exist.")
+];
+
+const validateShare = [
+    body("folderid").trim()
+        .toInt().isInt().withMessage("Folder Does Not Exist."),
+    body("days").trim()
+        .toInt().isInt().withMessage("Must be a number of days."),
 ];
 
 exports.showCreateFolder = [
@@ -69,7 +78,7 @@ exports.showFolder = [
                 files: true,
             }
         });
-        return res.render("folder", {folder: folderToShow});
+        return res.render("folder", {folder: folderToShow, owner: true});
     })
 ];
 
@@ -133,13 +142,6 @@ exports.showUpdateFolder = [
     validateId,
     basicErrorMiddleware("index", true),
     asyncHandler(async (req, res) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).render("index", {
-                errors: errors.array(),
-              });
-        };
-
         const formData = matchedData(req);
         if (!checkOwner("folder", formData.folderid, req.user.folders)) {
             return res.redirect("/");
@@ -209,3 +211,65 @@ exports.showAllFolders = [
         return res.render("allFolders", {folders});
     })
 ];
+
+exports.showShareForm = [
+    isAuth,
+    foldersGetWare,
+    asyncHandler(async (req, res) => {
+        return res.render("shareForm", {folders: req.user.folders});
+    })
+];
+
+exports.showAllCodes = [
+    isAuth,
+    foldersGetWare,
+    asyncHandler(async (req, res) => {
+        const allCodes = prisma.sharecode.findMany({
+            where: {
+                userid: req.user.id
+            }
+        })
+        return res.render("sharedFolders", {allCodes, linkStart: `${req.protocol}://${req.host}/share/` });
+    })
+]
+
+exports.makeShareCode = [
+    isAuth,
+    foldersGetWare,
+    validateShare,
+    asyncHandler(async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.render("shareForm", {
+                errors: errors.array(),
+                folders: req.user.folders
+            });
+        };
+        const formData = matchedData(req);
+        if (!checkOwner("folder", formData.folderid, req.user.folders)) {
+            return res.redirect("/");
+        };
+
+        const newCode = crypto.randomUUID();
+
+        await prisma.sharecode.create({
+            data: {
+                code: newCode,
+                expiry_date: add(new Date(), {days: formData.days}),
+                user: {
+                    connect: {
+                        id: req.user.id
+                    }
+                },
+                folder: {
+                    connect: {
+                        id: formData.folderid
+                    }
+                }
+
+            }
+        });
+
+        return res.render("sharedCode", {link: `${req.protocol}://${req.host}/share/${newCode}`});
+    })
+]

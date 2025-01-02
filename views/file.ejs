@@ -15,11 +15,13 @@
               Uploaded at:<%= file.upload_time %>
           </div>
           <a target="_blank" href="<%= file.url %>"><button >Download</button></a>
+          <% if (locals.owner) { %>
           <div>
             <form action=<%= `/storage/delete/${file.id}` %> method="POST">
                 <button type="submit">Delete</button>
             </form>
           </div>
+          <% } %>
         </div>
     <% } %>
     </div>

@@ -19,6 +19,7 @@ model User {
   username String @unique
   password String
   folders  Folder[]
+  codes ShareCode[]
 }
 
 model Folder {
@@ -27,6 +28,7 @@ model Folder {
   author User @relation(fields: [authorid], references: [id], onDelete: Cascade)
   authorid Int
   files File[]
+  codes ShareCode[]
 }
 
 model File {
@@ -39,6 +41,17 @@ model File {
   upload_time DateTime
   folder Folder @relation(fields: [folderid], references: [id], onDelete: Cascade)
   folderid Int
+}
+
+model ShareCode {
+  id Int @id @default(autoincrement())
+  code String
+  expiry_date DateTime
+  folder Folder @relation(fields: [folderid], references: [id], onDelete: Cascade)
+  folderid Int
+  user User @relation(fields: [userid], references: [id], onDelete: Cascade)
+  userid Int
+ 
 }
 
 model Session {

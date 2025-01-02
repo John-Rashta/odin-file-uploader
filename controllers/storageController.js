@@ -133,7 +133,7 @@ exports.showFileDetails = [
             }
         });
 
-        return res.render("file", {file:fileData});
+        return res.render("file", {file:fileData, owner: true});
     })
 ];
 
