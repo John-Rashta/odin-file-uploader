@@ -136,7 +136,6 @@ exports.showFileDetails = [
                 id: formData.fileid
             }
         });
-        console.log(fileData)
         return res.render("file", {file:fileData, owner: true});
     })
 ];
@@ -187,8 +186,6 @@ exports.makeUploadToFolder = [
                 }
             }
         })
-
-        console.log(newFile)
 
         await unlinkWithAsync(req.file.path);
 

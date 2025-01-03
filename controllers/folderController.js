@@ -54,7 +54,6 @@ exports.createFolder = [
             }
         });
         req.user.folders.push(newFolder.id);
-        console.log(req.user.folders)
         return res.redirect("/");
     })
 ];
